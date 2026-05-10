@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💸 MonBudgetFacile – Calculateur de budget en ligne</title>
+  <meta name="description" content="MonBudgetFacile aide à planifier ses dépenses, suivre son budget et calculer son épargne facilement.">
+  <meta name="keywords" content="budget, épargne, finances, dépenses, calculateur, gestion d'argent, monbudgetfacile">
+  <meta name="author" content="Gabin Robert" />
+  <script src="[cdn.jsdelivr.net](https://cdn.jsdelivr.net/npm/chart.js)"></script>
+  <style>
+    :root {
+      --main-color: #2b9c7f;
+      --accent-color: #e8f6f1;
+      --text-color: #222;
+      --font: 'Poppins', sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font);
+      background: var(--accent-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      background: var(--main-color);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    header img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid white;
+    }
+    .header-text {
+      text-align: center;
+      flex: 1;
+    }
+    .header-text h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+    .header-text p {
+      margin: 0.3rem 0 0;
+      font-style: italic;
+      font-size: 1rem;
+    }
+    main {
+      background: white;
+      margin-top: 2rem;
+      padding: 2rem;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 800px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: var(--main-color);
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.4rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 2rem;
+      width: 100%;
+      padding: 1rem;
+      background: var(--main-color);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #24886d;
+    }
+    canvas {
+      margin-top: 2rem;
+      width: 100%;
+      height: 300px;
+    }
+    .results {
+      margin-top: 1.5rem;
+      text-align: center;
+      background: var(--accent-color);
+      padding: 1rem;
+      border-radius: 10px;
+    }
+    footer {
+      margin: 2rem 0;
+      color: #555;
+      font-size: 0.9rem;
+    }
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        text-align: center;
+      }
+      .header-text h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="[i.imgur.com](https://i.imgur.com/3GvwNBf.png)" alt="photo de profil" />
+    <div class="header-text">
+      <h1>MonBudgetFacile 💰</h1>
+      <p>Votre allié numérique pour mieux gérer vos finances.</p>
+    </div>
+  </header>
+  <main>
+    <h2>🧮 Calculateur de budget mensuel</h2>
+    <label for="revenu">Revenu mensuel (€)</label>
+    <input type="number" id="revenu" placeholder="Ex : 2500" />
+    <label for="logement">Logement (€)</label>
+    <input type="number" id="logement" placeholder="Ex : 800" />
+    <label for="charges">Charges fixes (€)</label>
+    <input type="number" id="charges" placeholder="Ex : 200" />
+    <label for="courses">Courses & alimentation (€)</label>
+    <input type="number" id="courses" placeholder="Ex : 400" />
+    <label for="transport">Transport (€)</label>
+    <input type="number" id="transport" placeholder="Ex : 150" />
+    <label for="loisirs">Loisirs (€)</label>
+    <input type="number" id="loisirs" placeholder="Ex : 100" />
+    <label for="imprevus">Imprévus (€)</label>
+    <input type="number" id="imprevus" placeholder="Ex : 80" />
+    <label for="epargne">Épargne (€)</label>
+    <input type="number" id="epargne" placeholder="Ex : 200" />
+    <button id="calculer">Calculer mon budget</button>
+    <canvas id="budgetChart"></canvas>
+    <div class="results">
+      <p><strong>Total des dépenses :</strong> <span id="totalDepenses">0</span> €</p>
+      <p><strong>Montant restant :</strong> <span id="reste">0</span> €</p>
+      <p><strong>Épargne (% du revenu) :</strong> <span id="pourcentageEpargne">0</span>%</p>
+    </div>
+  </main>
+  <footer>
+    © 2026 MonBudgetFacile – Créé par Gabin Robert | Un outil simple et intuitif pour maîtriser votre argent.
+  </footer>
+  <script>
+    const ctx = document.getElementById("budgetChart").getContext("2d");
+    let chart;
+    document.getElementById("calculer").addEventListener("click", () => {
+      const revenu = +document.getElementById("revenu").value || 0;
+      const logement = +document.getElementById("logement").value || 0;
+      const charges = +document.getElementById("charges").value || 0;
+      const courses = +document.getElementById("courses").value || 0;
+      const transport = +document.getElementById("transport").value || 0;
+      const loisirs = +document.getElementById("loisirs").value || 0;
+      const imprevus = +document.getElementById("imprevus").value || 0;
+      const epargne = +document.getElementById("epargne").value || 0;
+      const totalDepenses = logement + charges + courses + transport + loisirs + imprevus + epargne;
+      const reste = revenu - totalDepenses;
+      const pourcentageEpargne = revenu > 0 ? ((epargne / revenu) * 100).toFixed(1) : 0;
+      document.getElementById("totalDepenses").textContent = totalDepenses.toLocaleString();
+      document.getElementById("reste").textContent = reste.toLocaleString();
+      document.getElementById("pourcentageEpargne").textContent = pourcentageEpargne;
+      const data = [logement, charges, courses, transport, loisirs, imprevus, epargne];
+      const labels = ["Logement", "Charges", "Courses", "Transport", "Loisirs", "Imprévus", "Épargne"];
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: ["#2B9C7F", "#48BFA1", "#81D4B9", "#5ED1B5", "#F39C6B", "#FB8B24", "#F25F5C"],
+            borderColor: "#fff",
+            borderWidth: 2,
+          }],
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                color: "#333",
+                font: { size: 14 },
+              },
+            },
+          },
+        },
+      });
+    });
+  </script>
+</body>
+</html>
